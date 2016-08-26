@@ -7,7 +7,7 @@ get_txt:
   and announcements without modifying the source html.
 """
 from flask import render_template
-from app import website
+from app import app
 import os
 
 #### Helper functions ####
@@ -34,31 +34,31 @@ def get_txt(filename):
   
   return raw_text
 
-#### Website routes ####
+#### routes ####
 
-@website.route('/')
+@app.route('/')
 def index():
   return render_template('index.html', announcements=get_txt("announcements.txt"))
 
-@website.route('/about.html')
+@app.route('/about.html')
 def about():
   return render_template('about.html', title="About Us")
 
-@website.route('/tickets.html')
+@app.route('/tickets.html')
 def tickets():
   return render_template('tickets.html', title="Buy Tickets")
 
-@website.route('/subtroupes.html')
+@app.route('/subtroupes.html')
 def subtroupes():
   # Dynamically update subtroupes.html with: tisbert.txt, npp.txt, workshopping.txt
   return render_template('subtroupes.html', title="SNS Subtroupes", 
       tisbert_text=get_txt("tisbert.txt"), npp_text=get_txt("npp.txt"), 
       workshopping_text=get_txt("workshopping.txt"))
 
-@website.route('/join.html')
+@app.route('/join.html')
 def join():
   return render_template('join.html', title="Join Us!")
 
-@website.route('/alumni.html')
+@app.route('/alumni.html')
 def alumni():
   return render_template('alumni.html', title="Alumni")
