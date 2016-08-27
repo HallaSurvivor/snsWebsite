@@ -1,7 +1,7 @@
 """
 Runs the website
 """
-from app import app
+from app import app, db
 import sys
 
 # Cheaty, cheaty hack to assume utf8 instead of ascii
