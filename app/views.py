@@ -10,7 +10,7 @@ We use the user's email as a token (stored as a cookie in flask `session`) to
 check if a proper user is logged in, and change the functionality appropriately.
 """
 from flask import render_template, flash, redirect, request, session, url_for
-from .forms import LoginForm, SignUpForm
+from .forms import LoginForm, SignUpForm, ChooseAdminsForm, ChooseWebmasterForm
 from .models import User
 from app import app, db
 from functools import wraps
@@ -115,9 +115,7 @@ def signup():
             return render_template('signup.html', title="Sign up!", form=form)
         else:
             # Create the new user
-            newUser = User(form.name.data, form.email.data, form.password.data)
-            db.session.add(newUser)
-            db.session.commit()
+            newUser = User.create(form.name.data, form.email.data, form.password.data)
 
             # Sign in the new user
             session['email'] = newUser.email
@@ -160,14 +158,104 @@ def profile():
     """
     return render_template('profile.html')
 
-# @app.route('/audition-time', methods=['GET', 'POST'])
-# def audition_time():
-#     if 'email' not in session:
-#         return redirect(url_for('login'))
+@app.route('/adminify', methods=['GET', 'POST'])
+@require_login(2)
+def adminify():
+    """
+    Render a checkbox for each user. Checked boxes correspond to admins
 
-#     user = User.query.filter_by(email=session['email']).first()
+    note: only the webmaster can see this page
+    """
+    form = ChooseAdminsForm()
 
-#     if user is None:
-#         return redirect(url_for('login'))
-#     else:
-#         return render_template('audition-time.html', form=form)
+    # Dynamically populate possible admins with the user list.
+    users = User.query.all()
+    form.admins.choices = [(user.email, user.name) for user in users if user.user_level != 2]
+
+    if request.method == 'POST':
+        if not form.validate():
+            # Dynamically update the prechecked boxes with users who are already admins
+            admins = User.query.filter_by(user_level=1).all()
+            form.admins.data = [user.email for user in admins]
+
+            return render_template('adminify.html', form=form)
+
+        else:
+            old_admin_emails = [user.email for user in users if user.user_level == 1]
+
+            for new_admin_email in form.admins.data:
+                user = User.query.filter_by(email=new_admin_email).first()
+                user.update(user_level=1)  # Make the user an admin
+
+                try:
+                    # Remove the admins from old_admin_emails
+                    # so that we're left with a list of people
+                    # to un-admin-ify
+                    old_admin_emails.remove(user.email)
+                except ValueError:
+                    # Get around trying to remove somebody who wasn't an admin
+                    pass
+
+            # Un-admin-ify people who were admins but aren't now
+            for old_admin_email in old_admin_emails:
+                user = User.query.filter_by(email=old_admin_email).first()
+                user.update(user_level=0)
+
+            return redirect(url_for('profile'))
+
+    elif request.method == 'GET':
+        # Dynamically update the prechecked boxes with users who are already admins
+        admins = User.query.filter_by(user_level=1).all()
+        form.admins.data = [user.email for user in admins]
+
+        return render_template('adminify.html', form=form)
+
+@app.route('/webmasterify', methods=['GET', 'POST'])
+@require_login(2)
+def webmasterify():
+    """
+    Render a checkbox for each user. Checked boxes correspond to webmasters
+
+    note: only the webmaster can see this page
+    """
+    form = ChooseWebmasterForm()
+
+    # Dynamically populate possible webmasters with the user list.
+    users = User.query.all()
+    form.masters.choices = [(user.email, user.name) for user in users if user.email != session['email']]
+
+    if request.method == 'POST':
+        if not form.validate():
+            # Dynamically update the prechecked boxes with users who are already admins
+            masters = User.query.filter_by(user_level=2).all()
+            # Make sure you can't un-webmaster yourself, which
+            # could leave us in a situation with no webmaster.
+            form.masters.data = [user.email for user in masters if user.email != session['email']]
+
+            return render_template('webmasterify.html', form=form)
+
+        else:
+            old_master_emails = [user.email for user in users if user.user_level == 2 and user.email != session['email']]
+
+            for new_master_email in form.masters.data:
+                user = User.query.filter_by(email=new_master_email).first()
+                user.update(user_level=2)  # Make the user a webmaster
+
+                try:
+                    old_master_emails.remove(user.email)
+                except ValueError:
+                    pass
+
+            # Un-webmaster-ify people who were admins but aren't now
+            for old_master_email in old_master_emails:
+                user = User.query.filter_by(email=old_master_email).first()
+                user.update(user_level=0)
+
+            return redirect(url_for('profile'))
+
+    elif request.method == 'GET':
+        # Dynamically update the prechecked boxes with users who are already admins
+        masters = User.query.filter_by(user_level=2).all()
+        form.masters.data = [user.email for user in masters]
+
+        return render_template('webmasterify.html', form=form)

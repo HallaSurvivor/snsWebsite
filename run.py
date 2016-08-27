@@ -1,3 +1,4 @@
+#!flask/bin/python
 """
 Runs the website
 """

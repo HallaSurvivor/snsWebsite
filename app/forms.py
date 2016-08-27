@@ -6,9 +6,16 @@ of their information is handled in views.py
 """
 
 from flask_wtf import Form
-from wtforms import StringField, BooleanField, PasswordField, SubmitField, RadioField
+from wtforms import StringField, BooleanField, PasswordField, SubmitField, RadioField, SelectMultipleField, widgets
 from wtforms.validators import DataRequired, Email, EqualTo
 from .models import User
+
+class MultiCheckboxField(SelectMultipleField):
+    """
+    Allow people to tick multiple checkboxes
+    """
+    widget = widgets.ListWidget(prefix_label=False)
+    option_widget = widgets.CheckboxInput()
 
 class LoginForm(Form):
     """
@@ -68,14 +75,28 @@ class SignUpForm(Form):
         else:
             return True
 
-class AuditionSignUpForm(Form):
+class ChooseAdminsForm(Form):
     """
-    Show a list of available audition times for a show
-
-    This is populated later, since the data is dynamically assigned
-    but `choices` is evaluated only once.
+    See a list of checkboxes to determine who is an admin
     """
-    selected_time = RadioField('Auditon Times')
+    admins = MultiCheckboxField('admins')
+    submit = SubmitField('adminify!')
 
     def __init__(self, *args, **kwargs):
         Form.__init__(self, *args, **kwargs)
+
+    def validate(self):
+        return True
+
+class ChooseWebmasterForm(Form):
+    """
+    See a list of checkboxes to determine who is an admin
+    """
+    masters = MultiCheckboxField('masters')
+    submit = SubmitField('make webmaster')
+
+    def __init__(self, *args, **kwargs):
+        Form.__init__(self, *args, **kwargs)
+
+    def validate(self):
+        return True

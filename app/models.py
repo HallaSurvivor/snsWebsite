@@ -5,7 +5,27 @@ Handles the databases and their properties
 from app import db
 from werkzeug import generate_password_hash, check_password_hash
 
-class User(db.Model):
+class QueryMixin(object):
+    """
+    Allows us to easily query and modify the database
+    """
+    @classmethod
+    def create(cls, *args):
+        instance = cls(*args)
+        return instance.save()
+
+    def update(self, **kwargs):
+        for key in kwargs:
+            setattr(self, key, kwargs[key])
+        return self.save()
+
+    def save(self, commit=True):
+        db.session.add(self)
+        if commit:
+            db.session.commit()
+        return self
+
+class User(db.Model, QueryMixin):
     """
     A table of Users of the website
 
@@ -26,11 +46,11 @@ class User(db.Model):
     password_hash = db.Column(db.String(120))
     user_level = db.Column(db.Integer, index=True)
 
-    def __init__(self, username, email, password):
+    def __init__(self, name, email, password):
         """
         Create a new user
         """
-        self.username = username.lower()
+        self.name = name.lower()
         self.email = email.lower()
         self.user_level = 0
 
@@ -49,7 +69,7 @@ class User(db.Model):
         return check_password_hash(self.password_hash, password)
 
     def __repr__(self):
-        return '<User: {username}>'.format(username=self.username)
+        return '<User: {name} Level: {level}>'.format(name=self.name, level=self.user_level)
 
 class AuditionTimes(db.Model):
     """
