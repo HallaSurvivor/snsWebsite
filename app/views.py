@@ -6,9 +6,10 @@ get_txt:
   We use this function to update information on the website, such as subtroupe descriptions
   and announcements without modifying the source html.
 """
-from flask import render_template, flash, redirect
-from .forms import LoginForm
-from app import app
+from flask import render_template, flash, redirect, request
+from .forms import LoginForm, SignUpForm
+from .models import User
+from app import app, db, lm
 import os
 
 #### Helper functions ####
@@ -34,6 +35,13 @@ def get_txt(filename):
     raw_text = complete_path
   
   return raw_text
+
+@lm.user_loader
+def load_user(id):
+    """
+    Return a User object from a database based on the user id
+    """
+    return User.query.get(int(id))
 
 #### routes ####
 
@@ -64,6 +72,22 @@ def join():
 @app.route('/alumni')
 def alumni():
   return render_template('alumni.html', title="Alumni")
+
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
+    form = SignUpForm()
+
+    if request.method == 'POST':
+        if form.validate() == False:
+            return render_template('signup.html', title="Sign up!", form=form)
+        else:
+            pass
+            # Create a user, sign in the user, go to profile
+
+    elif request.method == 'GET':
+        return render_template('signup.html', title="Sign up!", form=form)
+
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
