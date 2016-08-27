@@ -49,7 +49,11 @@
         <a style="margin-right: 20px;" href="/subtroupes">Subtroupes</a>
         <a style="margin-right: 20px;" href="/join">Join</a>
         <a style="margin-right: 20px;" href="/alumni">Alumni</a>
+        {% if 'email' not in session %}
         <a style="margin-right: 20px;" href="/login">Log in</a>
+        {% else %}
+        <a style="margin-right: 20px;" href="/logout">Log out</a>
+        {% endif %}
       </td>
 
     </tr></table>

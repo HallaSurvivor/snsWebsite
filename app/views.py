@@ -105,6 +105,13 @@ def login():
     elif request.method == 'GET':
         return render_template('login.html', title="Log in!", form=form)
 
+@app.route('/logout')
+def logout():
+    if 'email' in session:
+        session.pop('email', None)
+
+    return redirect(url_for('index'))
+
 @app.route('/profile')
 def profile():
     if 'email' not in session:
