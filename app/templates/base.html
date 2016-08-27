@@ -44,15 +44,24 @@
       </td>
 
       <td align="right">
-        <a style="margin-right: 20px;" href="/about.html">About</a>
-        <a style="margin-right: 20px;" href="/tickets.html">Tickets</a>
-        <a style="margin-right: 20px;" href="/subtroupes.html">Subtroupes</a>
-        <a style="margin-right: 20px;" href="/join.html">Join</a>
-        <a style="margin-right: 20px;" href="/alumni.html">Alumni</a>
+        <a style="margin-right: 20px;" href="/about">About</a>
+        <a style="margin-right: 20px;" href="/tickets">Tickets</a>
+        <a style="margin-right: 20px;" href="/subtroupes">Subtroupes</a>
+        <a style="margin-right: 20px;" href="/join">Join</a>
+        <a style="margin-right: 20px;" href="/alumni">Alumni</a>
+        <a style="margin-right: 20px;" href="/login">Log in</a>
       </td>
 
     </tr></table>
-
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <ul class="errorbox">
+          {% for message in messages %}
+            <li>{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
     {% block content %} {% endblock %}
 
     <!--Footer-->

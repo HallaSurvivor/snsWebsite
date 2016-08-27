@@ -106,7 +106,7 @@ h3 {
 }
   
 .tab {
-  width: 100px;
+  width: auto;
   height: 20px;
   padding: 10px 10px 5px 5px;
   position: fixed;
@@ -159,9 +159,9 @@ h3 {
 
 .homebox {
   @extend %box;
-  top: 15%;
+  top: 18%;
   right: 100px;
-  width: 280px;
+  width: auto;
   height: 130px;
 
   .text {
@@ -178,6 +178,15 @@ h3 {
   height: auto;
   top: 20%;
   left: 100px;
+}
+
+ul.errorbox {
+  @extend %box;
+  width: 100%;
+  height: auto;
+  font-size: 15px;
+  text-align: center;
+  top: 75px;
 }
 
 /*All the little orange buttons*/

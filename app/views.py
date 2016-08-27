@@ -6,7 +6,8 @@ get_txt:
   We use this function to update information on the website, such as subtroupe descriptions
   and announcements without modifying the source html.
 """
-from flask import render_template
+from flask import render_template, flash, redirect
+from .forms import LoginForm
 from app import app
 import os
 
@@ -37,28 +38,37 @@ def get_txt(filename):
 #### routes ####
 
 @app.route('/')
+@app.route('/index')
 def index():
   return render_template('index.html', announcements=get_txt("announcements.txt"))
 
-@app.route('/about.html')
+@app.route('/about')
 def about():
   return render_template('about.html', title="About Us")
 
-@app.route('/tickets.html')
+@app.route('/tickets')
 def tickets():
   return render_template('tickets.html', title="Buy Tickets")
 
-@app.route('/subtroupes.html')
+@app.route('/subtroupes')
 def subtroupes():
   # Dynamically update subtroupes.html with: tisbert.txt, npp.txt, workshopping.txt
   return render_template('subtroupes.html', title="SNS Subtroupes", 
       tisbert_text=get_txt("tisbert.txt"), npp_text=get_txt("npp.txt"), 
       workshopping_text=get_txt("workshopping.txt"))
 
-@app.route('/join.html')
+@app.route('/join')
 def join():
   return render_template('join.html', title="Join Us!")
 
-@app.route('/alumni.html')
+@app.route('/alumni')
 def alumni():
   return render_template('alumni.html', title="Alumni")
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    form = LoginForm()
+    if form.validate_on_submit():
+        flash("Login requested.")
+        return redirect('/index')
+    return render_template('login.html', title="Sign In", form=form)

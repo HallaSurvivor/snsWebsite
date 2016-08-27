@@ -2,7 +2,7 @@
   IT CONTAINS ALL THE SCSS FOR THE CSS CLASSES AND OTHER STYLING INFO*/
 /*This imports the mixins, placeholders, and variables from the helper folder*/
 @import url(https://fonts.googleapis.com/css?family=Lora:400,400italic,700,700italic);
-.homebox, .alumnibox {
+.homebox, .alumnibox, ul.errorbox {
   background: rgba(255, 255, 255, 0.6);
   z-index: 999;
   position: absolute;
@@ -99,7 +99,7 @@ h3 {
   -o-transition-duration: 0.5s; }
 
 .tab {
-  width: 100px;
+  width: auto;
   height: 20px;
   padding: 10px 10px 5px 5px;
   position: fixed;
@@ -151,9 +151,9 @@ h3 {
 
 /*Clear white boxes*/
 .homebox {
-  top: 15%;
+  top: 18%;
   right: 100px;
-  width: 280px;
+  width: auto;
   height: 130px; }
   .homebox .text {
     font-size: 20px;
@@ -166,6 +166,13 @@ h3 {
   height: auto;
   top: 20%;
   left: 100px; }
+
+ul.errorbox {
+  width: 100%;
+  height: auto;
+  font-size: 15px;
+  text-align: center;
+  top: 75px; }
 
 /*All the little orange buttons*/
 .button {
