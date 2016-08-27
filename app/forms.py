@@ -11,6 +11,9 @@ from wtforms.validators import DataRequired, Email, EqualTo
 from .models import User
 
 class LoginForm(Form):
+    """
+    Handle logging in to the website.
+    """
     username = StringField('username', validators=[DataRequired("Please enter a username.")])
     password = PasswordField('password', validators=[DataRequired("Please enter a password.")])
     submit = SubmitField("Sign In")
@@ -19,6 +22,10 @@ class LoginForm(Form):
         Form.__init__(self, *args, **kwargs)
 
     def validate(self):
+        """
+        Check the user exists and the password matches
+        """
+
         if not Form.validate(self):
             return False
 
@@ -35,6 +42,9 @@ class LoginForm(Form):
             return False
 
 class SignUpForm(Form):
+    """
+    Handle signing in to the website.
+    """
     username = StringField('username', validators=[DataRequired("Please enter a username.")])
     email = StringField('email', validators=[DataRequired("Please enter a valid email."), Email("Please enter a valid email.")])
     password = PasswordField('password', validators=[DataRequired("Please enter a password.")])
@@ -45,6 +55,9 @@ class SignUpForm(Form):
         Form.__init__(self, *args, **kwargs)
 
     def validate(self):
+        """
+        Ensure the username is not taken
+        """
         if not Form.validate(self):
             return False
 

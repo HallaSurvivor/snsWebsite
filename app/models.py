@@ -36,21 +36,6 @@ class User(db.Model):
         """
         return check_password_hash(self.password_hash, password)
 
-    @property
-    def is_authenticated(self):
-        return True
-
-    @property
-    def is_active(self):
-        return True
-
-    @property 
-    def is_anonymous(self):
-        return False
-
-    def get_id(self):
-        return unicode(self.id)
-
     def __repr__(self):
         return '<User: {username}>'.format(username=self.username)
 

@@ -5,11 +5,14 @@ get_txt:
   a helper function which retrieves the text from a file passed as input.
   We use this function to update information on the website, such as subtroupe descriptions
   and announcements without modifying the source html.
+
+We use the user's email as a token (stored as a cookie in flask `session`) to
+check if a proper user is logged in, and change the functionality appropriately.
 """
 from flask import render_template, flash, redirect, request, session, url_for
 from .forms import LoginForm, SignUpForm
 from .models import User
-from app import app, db, lm
+from app import app, db
 import os
 
 #### Helper functions ####
@@ -35,13 +38,6 @@ def get_txt(filename):
     raw_text = complete_path
   
   return raw_text
-
-@lm.user_loader
-def load_user(id):
-    """
-    Return a User object from a database based on the user id
-    """
-    return User.query.get(int(id))
 
 #### routes ####
 
@@ -78,7 +74,7 @@ def signup():
     form = SignUpForm()
 
     if request.method == 'POST':
-        if form.validate() == False:
+        if not form.validate():
             return render_template('signup.html', title="Sign up!", form=form)
         else:
             # Create the new user
@@ -100,7 +96,7 @@ def login():
     form = LoginForm()
 
     if request.method == 'POST':
-        if form.validate() == False:
+        if not form.validate():
             return render_template('login.html', title="Log in!", form=form)
         else:
             session['email'] = User.query.filter_by(username=form.username.data).first().email
