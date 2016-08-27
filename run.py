@@ -8,5 +8,8 @@ import sys
 reload(sys)
 sys.setdefaultencoding('utf8')
 
+# Create the database if it doesn't exist
+db.create_all()
+
 # Run the actual site
 app.run(debug=True)
