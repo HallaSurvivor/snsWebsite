@@ -8,12 +8,23 @@ from werkzeug import generate_password_hash, check_password_hash
 class User(db.Model):
     """
     A table of Users of the website
+
+    * id is the unique id assigned to each user
+    * name is the name of the user
+    * email is the user's email
+    * password_hash is the salted and hashed version of the user's password
+    * user_level defines the permissions of the user
+        + 0 by default
+        + 1 if admin
+        + 2 if webmaster
+
     """
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(64), index=True, unique=True)
+    name = db.Column(db.String(64), index=True, unique=True)
     email = db.Column(db.String(120), index=True, unique=True)
     audition_times = db.relationship('AuditionTimes', backref='auditioner', lazy='dynamic')
     password_hash = db.Column(db.String(120))
+    user_level = db.Column(db.Integer, index=True)
 
     def __init__(self, username, email, password):
         """
@@ -21,6 +32,7 @@ class User(db.Model):
         """
         self.username = username.lower()
         self.email = email.lower()
+        self.user_level = 0
 
         self.set_password(password)
 

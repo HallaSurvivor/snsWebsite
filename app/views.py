@@ -13,6 +13,7 @@ from flask import render_template, flash, redirect, request, session, url_for
 from .forms import LoginForm, SignUpForm
 from .models import User
 from app import app, db
+from functools import wraps
 import os
 
 #### Helper functions ####
@@ -38,6 +39,42 @@ def get_txt(filename):
     raw_text = complete_path
   
   return raw_text
+
+def require_login(user_level=0):
+    """
+    A decorator to verify the user is logged in before going to a webpage
+
+    user_level = 0 requires the user to simply exist
+    user_level = 1 requires the user be an admin
+    user_level = 2 requires the user be the webmaster
+    """
+    def login_decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+
+            # If there isn't a cookie
+            if 'email' not in session:
+                flash("Please log in to access that page")
+                return redirect(url_for('login'))
+
+            user = User.query.filter_by(email=session['email']).first()
+
+            # If there *is* a cookie but it doesn't correspond to a user
+            if user is None:  
+                flash("Please log in to access that page")
+                return redirect(url_for('login'))
+
+            # If there is a user, but they don't have permission
+            elif user.user_level < user_level:
+                flash("You do not have permission to access this page")
+                return redirect(url_for('profile'))
+
+            # We gucci, fam
+            else:
+                return func(*args, **kwargs)
+
+        return wrapper
+    return login_decorator
 
 #### routes ####
 
@@ -78,7 +115,7 @@ def signup():
             return render_template('signup.html', title="Sign up!", form=form)
         else:
             # Create the new user
-            newUser = User(form.username.data, form.email.data, form.password.data)
+            newUser = User(form.name.data, form.email.data, form.password.data)
             db.session.add(newUser)
             db.session.commit()
 
@@ -99,7 +136,7 @@ def login():
         if not form.validate():
             return render_template('login.html', title="Log in!", form=form)
         else:
-            session['email'] = User.query.filter_by(username=form.username.data).first().email
+            session['email'] = form.email.data
             return redirect(url_for('profile'))
 
     elif request.method == 'GET':
@@ -113,13 +150,24 @@ def logout():
     return redirect(url_for('index'))
 
 @app.route('/profile')
+@require_login()
 def profile():
-    if 'email' not in session:
-        return redirect(url_for('login'))
+    """
+    Render the profile of the signed in user.
 
-    user = User.query.filter_by(email=session['email']).first()
+    The dynamic content based in user 
+    is handled in profile.html
+    """
+    return render_template('profile.html')
 
-    if user is None:
-        return redirect(url_for('login'))
-    else:
-        return render_template('profile.html')
+# @app.route('/audition-time', methods=['GET', 'POST'])
+# def audition_time():
+#     if 'email' not in session:
+#         return redirect(url_for('login'))
+
+#     user = User.query.filter_by(email=session['email']).first()
+
+#     if user is None:
+#         return redirect(url_for('login'))
+#     else:
+#         return render_template('audition-time.html', form=form)
