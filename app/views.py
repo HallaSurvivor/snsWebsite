@@ -6,7 +6,7 @@ get_txt:
   We use this function to update information on the website, such as subtroupe descriptions
   and announcements without modifying the source html.
 """
-from flask import render_template, flash, redirect, request
+from flask import render_template, flash, redirect, request, session, url_for
 from .forms import LoginForm, SignUpForm
 from .models import User
 from app import app, db, lm
@@ -81,18 +81,42 @@ def signup():
         if form.validate() == False:
             return render_template('signup.html', title="Sign up!", form=form)
         else:
-            pass
-            # Create a user, sign in the user, go to profile
+            # Create the new user
+            newUser = User(form.username.data, form.email.data, form.password.data)
+            db.session.add(newUser)
+            db.session.commit()
+
+            # Sign in the new user
+            session['email'] = newUser.email
+
+            # Redirect to profile
+            return redirect(url_for('profile'))
 
     elif request.method == 'GET':
         return render_template('signup.html', title="Sign up!", form=form)
 
-
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
-    if form.validate_on_submit():
-        flash("Login requested.")
-        return redirect('/index')
-    return render_template('login.html', title="Sign In", form=form)
+
+    if request.method == 'POST':
+        if form.validate() == False:
+            return render_template('login.html', title="Log in!", form=form)
+        else:
+            session['email'] = User.query.filter_by(username=form.username.data).first().email
+            return redirect(url_for('profile'))
+
+    elif request.method == 'GET':
+        return render_template('login.html', title="Log in!", form=form)
+
+@app.route('/profile')
+def profile():
+    if 'email' not in session:
+        return redirect(url_for('login'))
+
+    user = User.query.filter_by(email=session['email']).first()
+
+    if user is None:
+        return redirect(url_for('login'))
+    else:
+        return render_template('profile.html')

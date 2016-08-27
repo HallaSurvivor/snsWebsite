@@ -11,8 +11,28 @@ from wtforms.validators import DataRequired, Email, EqualTo
 from .models import User
 
 class LoginForm(Form):
-    openid = StringField('openid', validators=[DataRequired()])
-    remember_me = BooleanField('remember_me', default=False)
+    username = StringField('username', validators=[DataRequired("Please enter a username.")])
+    password = PasswordField('password', validators=[DataRequired("Please enter a password.")])
+    submit = SubmitField("Sign In")
+
+    def __init__(self, *args, **kwargs):
+        Form.__init__(self, *args, **kwargs)
+
+    def validate(self):
+        if not Form.validate(self):
+            return False
+
+        user = User.query.filter_by(username = self.username.data.lower()).first()
+
+        if not user:
+            self.username.errors.append("Invalid username")
+            return False
+
+        if user.check_password(self.password.data):
+            return True
+        else:
+            self.password.errors.append("Invalid password")
+            return False
 
 class SignUpForm(Form):
     username = StringField('username', validators=[DataRequired("Please enter a username.")])
@@ -20,6 +40,9 @@ class SignUpForm(Form):
     password = PasswordField('password', validators=[DataRequired("Please enter a password.")])
     password_confirmation = PasswordField('password_confirmation', validators=[DataRequired("Please confirm your password."), EqualTo('password', "Please make sure your passwords match.")])
     submit = SubmitField('Sign up!')
+
+    def __init__(self, *args, **kwargs):
+        Form.__init__(self, *args, **kwargs)
 
     def validate(self):
         if not Form.validate(self):
