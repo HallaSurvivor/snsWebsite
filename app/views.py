@@ -10,8 +10,8 @@ We use the user's email as a token (stored as a cookie in flask `session`) to
 check if a proper user is logged in, and change the functionality appropriately.
 """
 from flask import render_template, flash, redirect, request, session, url_for
-from .forms import LoginForm, SignUpForm, ChooseAdminsForm, ChooseWebmasterForm
-from .models import User
+from .forms import LoginForm, SignUpForm, ChooseAdminsForm, ChooseWebmasterForm, CreateAuditionTimesForm
+from .models import User, PossibleAuditionTimes
 from app import app, db
 from functools import wraps
 import os
@@ -259,3 +259,25 @@ def webmasterify():
         form.masters.data = [user.email for user in masters]
 
         return render_template('webmasterify.html', form=form)
+
+@app.route('/make-audition-times', methods=['GET', 'POST'])
+@require_login(1)
+def make_audition_times():
+    form = CreateAuditionTimesForm()
+
+    if request.method == 'POST':
+        if not form.validate():
+            return render_template('make-audition-times.html', form=form)
+        else:
+
+            title = form.title.data
+            date  = form.date.data
+            start = form.start_time.data
+            end   = form.start_time.data + form.duration.data
+
+            audition_length = form.audition_length.data  # length of one person's audition
+
+            PossibleAuditionTimes.create(title, date, start, end, audition_length)
+
+    elif request.method == 'GET':
+        return render_template('make-audition-times.html', form=form)

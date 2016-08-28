@@ -6,9 +6,13 @@ of their information is handled in views.py
 """
 
 from flask_wtf import Form
-from wtforms import StringField, BooleanField, PasswordField, SubmitField, RadioField, SelectMultipleField, widgets
+
+from wtforms import (StringField, BooleanField, PasswordField, SubmitField, 
+RadioField, SelectMultipleField, widgets, SelectField, DateField)
+
 from wtforms.validators import DataRequired, Email, EqualTo
 from .models import User
+import datetime
 
 class MultiCheckboxField(SelectMultipleField):
     """
@@ -90,7 +94,7 @@ class ChooseAdminsForm(Form):
 
 class ChooseWebmasterForm(Form):
     """
-    See a list of checkboxes to determine who is an admin
+    See a list of checkboxes to determine who is a webmaster
     """
     masters = MultiCheckboxField('masters')
     submit = SubmitField('make webmaster')
@@ -100,3 +104,35 @@ class ChooseWebmasterForm(Form):
 
     def validate(self):
         return True
+
+class CreateAuditionTimesForm(Form):
+    """
+    The form for admins to create a new audition time
+
+    The admin chooses a start time, a duration of 
+    time to block out (which determines the end time), and
+    a length of time for one audition to last.
+
+    This is used to automatically create a list of possible 
+    audition times for the auditioners to see.
+    """
+
+    title = StringField("Title of show", validators=[DataRequired("Please enter a title")])
+
+    date = DateField("Date", format='%Y-%m-%d')
+
+    start_times = [datetime.time(h, 30*m) for h in xrange(24) for m in xrange(2)]
+    start_time = SelectField("Start Time", choices=[(x, x.strftime("%H:%M")) for x in start_times])
+
+    # The length of one audition
+    lengths = [datetime.timedelta(minutes=5*(x+1)) for x in xrange(6)]
+    audition_length = SelectField("Individual audition length", choices=[(x, str(x)[2:4] + " minutes") for x in lengths])
+
+    # The length of the total allotted time for auditions
+    durations = [datetime.timedelta(hours=x+1) for x in xrange(8)]
+    duration = SelectField("Length of audition block", choices=[(x, str(x)[0] + " hours") for x in durations])
+
+    submit = SubmitField("Make audition")
+
+    def __init__(self, *args, **kwargs):
+        Form.__init__(self, *args, **kwargs)

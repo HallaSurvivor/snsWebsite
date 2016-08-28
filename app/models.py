@@ -3,6 +3,7 @@ Handles the databases and their properties
 """
 
 from app import db
+from datetime import datetime
 from werkzeug import generate_password_hash, check_password_hash
 
 class QueryMixin(object):
@@ -10,8 +11,8 @@ class QueryMixin(object):
     Allows us to easily query and modify the database
     """
     @classmethod
-    def create(cls, *args):
-        instance = cls(*args)
+    def create(cls, *args, **kwargs):
+        instance = cls(*args, **kwargs)
         return instance.save()
 
     def update(self, **kwargs):
@@ -37,7 +38,7 @@ class User(db.Model, QueryMixin):
         + 0 by default
         + 1 if admin
         + 2 if webmaster
-
+    * date_joined is the date and time that the user signed up
     """
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), index=True, unique=True)
@@ -45,6 +46,7 @@ class User(db.Model, QueryMixin):
     audition_times = db.relationship('AuditionTimes', backref='auditioner', lazy='dynamic')
     password_hash = db.Column(db.String(120))
     user_level = db.Column(db.Integer, index=True)
+    date_joined = db.Column(db.DateTime, index=True)
 
     def __init__(self, name, email, password):
         """
@@ -55,6 +57,8 @@ class User(db.Model, QueryMixin):
         self.user_level = 0
 
         self.set_password(password)
+
+        self.date_joined = datetime.utcnow()
 
     def set_password(self, password):
         """
@@ -70,6 +74,32 @@ class User(db.Model, QueryMixin):
 
     def __repr__(self):
         return '<User: {name} Level: {level}>'.format(name=self.name, level=self.user_level)
+
+class PossibleAuditionTimes(db.Model, QueryMixin):
+    """
+    A table of the legal audition times for any given show
+    """
+    
+    id = db.Column(db.Integer, primary_key=True)
+    show = db.Column(db.String(64), index=True)
+    date = db.Column(db.DateTime, index=True)
+
+    start_time = db.Column(db.DateTime)
+    end_time = db.Column(db.DateTime)
+
+    audition_length = db.Column(db.Interval)
+
+    def __init__(self, show, date, start, end, audition_length):
+        """
+        Create a new audition block
+        """
+        self.show = show
+        self.date = date
+
+        self.start_time = start
+        self.end_time = end
+
+        audition_length = audition_length
 
 class AuditionTimes(db.Model):
     """
