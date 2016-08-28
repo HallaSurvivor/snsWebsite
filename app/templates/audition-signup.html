@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <br><br><br<br><br><br><br><br><br><br><br><br><br><br><br>
+  <h1>Auditions for {{ show }}</h1>
+  <form action="" method=post>
+    <table>
+      {% for day in days %}
+        <tr>
+          <th>{{ day }}</th>
+          <table>
+            {% for subfield in form.available_times %}
+            {% if day in subfield.label.text %}
+              <tr>
+                <td>{{ subfield.label.text.replace(day, "")[2:] }}</td>
+                <td>{{ subfield }}</td>
+              </tr>
+            {% endif %}
+            {% endfor %}
+          </table>
+        </tr>
+      {% endfor %}
+    </table>
+    {% if form.available_times.errors %}
+    <ul class="errors">
+    {% for error in form.available_times.errors %}
+      <li>{{error}}</li>
+    {% endfor %}
+    </ul>
+    {% endif %}
+    {{ form.hidden_tag() }}
+  </form>
+{% endblock %}

@@ -90,6 +90,9 @@ class ChooseAdminsForm(Form):
         Form.__init__(self, *args, **kwargs)
 
     def validate(self):
+        """
+        This is what we in the biz call a shitty shitty hack
+        """
         return True
 
 class ChooseWebmasterForm(Form):
@@ -103,6 +106,9 @@ class ChooseWebmasterForm(Form):
         Form.__init__(self, *args, **kwargs)
 
     def validate(self):
+        """
+        This is what we in the biz call a shitty shitty hack
+        """
         return True
 
 class CreateAuditionTimesForm(Form):
@@ -133,6 +139,31 @@ class CreateAuditionTimesForm(Form):
     duration = SelectField("Length of audition block", choices=[(x, str(x)[0] + " hours") for x in durations])
 
     submit = SubmitField("Make audition")
+
+    def __init__(self, *args, **kwargs):
+        Form.__init__(self, *args, **kwargs)
+
+class ShowSelectForm(Form):
+    """
+    If there's multiple shows ongoing, pick the show you want to audition for
+
+    Dynamically updated in views.py
+    """
+    shows = SelectField("Shows you can audition for")
+    submit = SubmitField("Select")
+
+    def __init__(self, *args, **kwargs):
+        Form.__init__(self, *args, **kwargs)
+
+class AuditionSignupForm(Form):
+    """
+    What people planning to audition see when they sign up for a timeslot
+
+    The available times are populated dynamically in views.py
+    """
+
+    available_times = RadioField("Available Times")
+    submit = SubmitField("Submit")
 
     def __init__(self, *args, **kwargs):
         Form.__init__(self, *args, **kwargs)

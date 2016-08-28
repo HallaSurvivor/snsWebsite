@@ -10,10 +10,11 @@ We use the user's email as a token (stored as a cookie in flask `session`) to
 check if a proper user is logged in, and change the functionality appropriately.
 """
 from flask import render_template, flash, redirect, request, session, url_for
-from .forms import LoginForm, SignUpForm, ChooseAdminsForm, ChooseWebmasterForm, CreateAuditionTimesForm
+from .forms import LoginForm, SignUpForm, ChooseAdminsForm, ChooseWebmasterForm, CreateAuditionTimesForm, AuditionSignupForm, ShowSelectForm
 from .models import User, PossibleAuditionTimes
 from app import app, db
 from functools import wraps
+import datetime
 import os
 
 #### Helper functions ####
@@ -281,3 +282,69 @@ def make_audition_times():
 
     elif request.method == 'GET':
         return render_template('make-audition-times.html', form=form)
+
+@app.route('/audition-signup', methods=['GET', 'POST'])
+@require_login()
+def audition_signup_selector():
+    """
+    Select the show to audition for if there is more than one, otherwise redirect immediately
+    """
+    today = datetime.datetime.today()
+
+    all_auditions = PossibleAuditionTimes.query.all()
+    upcoming_auditions = [a for a in all_auditions if a.date > today]
+   
+    shows = set()
+    for a in upcoming_auditions:
+        shows.add(a.show)
+
+    if len(shows) == 0:
+        flash("No upcoming auditions")
+        return redirect(url_for('profile'))
+
+    if len(shows) == 1:
+        return redirect(url_for('audition_signup', show=shows[0]))
+
+    if len(shows) > 1:
+        form = ShowSelectForm()
+        form.shows.choices = [(s,s) for s in shows]
+        
+        if request.method == 'POST':
+            if not form.validate():
+                return render_template('select-show.html', form=form)
+            else:
+                return redirect(url_for('audition_signup', show=form.shows.data))
+
+        elif request.method == 'GET':
+            return render_template('select-show.html', form=form)
+
+@app.route('/audition-signup/<string:show>', methods=['GET', 'POST'])
+@require_login()
+def audition_signup(show):
+    form = AuditionSignupForm()
+
+    today = datetime.datetime.today()
+
+    all_auditions = PossibleAuditionTimes.query.all()
+    upcoming_auditions = [a for a in all_auditions if a.date > today]
+    relevant_auditions = [a for a in upcoming_auditions if a.show == show]
+
+    days = [a.date.strftime("%A %B %d") for a in relevant_auditions]
+
+    # We create a complex label here, which codifies all the information
+    # that we need to properly sort and display the audition times in the
+    # html file. The label the user sees will be just the audition time
+    labels = ["{0}::{1}".format(a.date.strftime("%A %B %d"), a.start_time.strftime("%H:%M"))
+            for a in relevant_auditions]
+
+    form.available_times.choices = [(c,c) for c in labels]
+
+    if request.method == 'POST':
+        if not form.validate():
+            return render_template('audition-signup.html', form=form, show=show, days=days)
+        else:
+            # get data from form, sign up the logged in user at that time
+            pass
+
+    elif request.method == 'GET':
+        return render_template('audition-signup.html', form=form, show=show, days=days)
