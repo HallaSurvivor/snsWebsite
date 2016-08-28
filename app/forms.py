@@ -121,6 +121,9 @@ class CreateAuditionTimesForm(Form):
 
     This is used to automatically create a list of possible 
     audition times for the auditioners to see.
+
+    WTForms doesn't play nice with datetime objects, so we need to first
+    encode them as strings, then decode them later on... This gets gross
     """
 
     title = StringField("Title of show", validators=[DataRequired("Please enter a title")])
@@ -128,15 +131,15 @@ class CreateAuditionTimesForm(Form):
     date = DateField("Date", format='%Y-%m-%d')
 
     start_times = [datetime.time(h, 30*m) for h in xrange(24) for m in xrange(2)]
-    start_time = SelectField("Start Time", choices=[(x, x.strftime("%H:%M")) for x in start_times])
+    start_time = SelectField("Start Time", choices=[(x.strftime("%H:%M"), x.strftime("%H:%M")) for x in start_times])
 
     # The length of one audition
     lengths = [datetime.timedelta(minutes=5*(x+1)) for x in xrange(6)]
-    audition_length = SelectField("Individual audition length", choices=[(x, str(x)[2:4] + " minutes") for x in lengths])
+    audition_length = SelectField("Individual audition length", choices=[(str(x.total_seconds()), str(x)[2:4] + " minutes") for x in lengths])
 
     # The length of the total allotted time for auditions
     durations = [datetime.timedelta(hours=x+1) for x in xrange(8)]
-    duration = SelectField("Length of audition block", choices=[(x, str(x)[0] + " hours") for x in durations])
+    duration = SelectField("Length of audition block", choices=[(str(x.total_seconds()), str(x)[0] + " hours") for x in durations])
 
     submit = SubmitField("Make audition")
 

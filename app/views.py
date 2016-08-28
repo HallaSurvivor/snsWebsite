@@ -268,17 +268,24 @@ def make_audition_times():
 
     if request.method == 'POST':
         if not form.validate():
+            print form.data
             return render_template('make-audition-times.html', form=form)
         else:
 
+            # WTForms doesn't like passing around datetime objects,
+            # so we first encode them as strings in various ways,
+            # now we need to decode them.
             title = form.title.data
             date  = form.date.data
-            start = form.start_time.data
-            end   = form.start_time.data + form.duration.data
+            start = datetime.datetime.combine(datetime.date.today(), datetime.time(hour=int(form.start_time.data[:2]), minute=int(form.start_time.data[-2:])))
+            end   = start + datetime.timedelta(seconds=int(float(form.duration.data)))
 
-            audition_length = form.audition_length.data  # length of one person's audition
+            audition_length = datetime.timedelta(int(float(form.audition_length.data)))  # length of one person's audition
 
             PossibleAuditionTimes.create(title, date, start, end, audition_length)
+
+            flash("Audition time created successfully!")
+            return redirect(url_for('profile'))
 
     elif request.method == 'GET':
         return render_template('make-audition-times.html', form=form)
