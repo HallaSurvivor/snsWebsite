@@ -280,7 +280,7 @@ def make_audition_times():
             start = datetime.datetime.combine(datetime.date.today(), datetime.time(hour=int(form.start_time.data[:2]), minute=int(form.start_time.data[-2:])))
             end   = start + datetime.timedelta(seconds=int(float(form.duration.data)))
 
-            audition_length = datetime.timedelta(int(float(form.audition_length.data)))  # length of one person's audition
+            audition_length = datetime.timedelta(seconds=int(float(form.audition_length.data)))  # length of one person's audition
 
             PossibleAuditionTimes.create(title, date, start, end, audition_length)
 
@@ -332,19 +332,36 @@ def audition_signup(show):
 
     today = datetime.datetime.today()
 
-    all_auditions = PossibleAuditionTimes.query.all()
-    upcoming_auditions = [a for a in all_auditions if a.date > today]
-    relevant_auditions = [a for a in upcoming_auditions if a.show == show]
+    all_audition_blocks = PossibleAuditionTimes.query.all()
+    upcoming_audition_blocks = [a for a in all_audition_blocks if a.date > today]
+    relevant_audition_blocks = [a for a in upcoming_audition_blocks if a.show == show]
 
-    days = [a.date.strftime("%A %B %d") for a in relevant_auditions]
+    days = [a.date.strftime("%A %B %d") for a in relevant_audition_blocks]
+
+    # We expand the relevant audition blocks into a list of every possible audition
+    # the user can sign up for (for a given show)
+    relevant_auditions = []
+    for a in relevant_audition_blocks:
+
+        all_auditions_in_block = []
+        current_start = a.start_time
+        while current_start <= a.end_time:
+            all_auditions_in_block.append(current_start.strftime("%H:%M"))
+            current_start += a.audition_length
+
+        formatted_auditions = zip([a.date.strftime("%A %B %d")] * len(all_auditions_in_block), all_auditions_in_block)
+        relevant_auditions += formatted_auditions
+
 
     # We create a complex label here, which codifies all the information
     # that we need to properly sort and display the audition times in the
     # html file. The label the user sees will be just the audition time
-    labels = ["{0}::{1}".format(a.date.strftime("%A %B %d"), a.start_time.strftime("%H:%M"))
-            for a in relevant_auditions]
+    labels = ["{0}::{1}".format(a[0], a[1]) for a in relevant_auditions]
 
     form.available_times.choices = [(c,c) for c in labels]
+
+    for subfield in form.available_times:
+        print subfield
 
     if request.method == 'POST':
         if not form.validate():

@@ -98,7 +98,7 @@ class PossibleAuditionTimes(db.Model, QueryMixin):
         self.start_time = start
         self.end_time = end
 
-        audition_length = audition_length
+        self.audition_length = audition_length
 
 class AuditionTimes(db.Model):
     """

@@ -5,21 +5,26 @@
   <h1>Auditions for {{ show }}</h1>
   <form action="" method=post>
     <table>
-      {% for day in days %}
-        <tr>
-          <th>{{ day }}</th>
+      <tr>
+        {% for day in days %}
+        <th>{{ day }}</th>
+        {% endfor %}
+      </tr>
+      <tr>
+        {% for day in days %}
+        <td>
           <table>
             {% for subfield in form.available_times %}
             {% if day in subfield.label.text %}
               <tr>
-                <td>{{ subfield.label.text.replace(day, "")[2:] }}</td>
-                <td>{{ subfield }}</td>
+                <td>{{ subfield }} {{ subfield.label.text.replace(day, "")[2:] }}</td>
               </tr>
             {% endif %}
             {% endfor %}
           </table>
-        </tr>
-      {% endfor %}
+        </td>
+        {% endfor %}
+      </tr>
     </table>
     {% if form.available_times.errors %}
     <ul class="errors">
