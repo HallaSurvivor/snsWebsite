@@ -157,7 +157,8 @@ def profile():
     The dynamic content based in user 
     is handled in profile.html
     """
-    return render_template('profile.html')
+    user = User.query.filter_by(email=session['email']).first()
+    return render_template('profile.html', user=user)
 
 @app.route('/adminify', methods=['GET', 'POST'])
 @require_login(2)
