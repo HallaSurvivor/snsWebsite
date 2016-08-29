@@ -10,11 +10,13 @@ We use the user's email as a token (stored as a cookie in flask `session`) to
 check if a proper user is logged in, and change the functionality appropriately.
 """
 from flask import render_template, flash, redirect, request, session, url_for
-from .forms import LoginForm, SignUpForm, ChooseAdminsForm, ChooseWebmasterForm, CreateAuditionTimesForm, AuditionSignupForm, ShowSelectForm
+from .forms import LoginForm, SignUpForm, ChooseAdminsForm, ChooseWebmasterForm, CreateAuditionTimesForm, AuditionSignupForm, ShowSelectForm, SettingsForm
 from .models import User, PossibleAuditionTimes, AuditionTimes
+from werkzeug import secure_filename
 from app import app, db
 from functools import wraps
 import datetime
+import hashlib
 import os
 
 #### Helper functions ####
@@ -40,6 +42,12 @@ def get_txt(filename):
     raw_text = complete_path
   
   return raw_text
+
+def allowed_file(filename):
+    """
+    Check if a file's extension is allowed
+    """
+    return '.' in filename and filename.rsplit('.', 1)[1] in allowed_extensions
 
 def get_user():
     """
@@ -167,6 +175,33 @@ def profile():
     is handled in profile.html
     """
     return render_template('profile.html', user=get_user())
+
+@app.route('/settings', methods=['GET', 'POST'])
+@require_login()
+def settings():
+    """
+    Show the user's settings and allow them to change
+    """
+    user = get_user()
+
+    # allowed_extensions = set(["png", "jpg", "jpeg", "gif"])
+    form = SettingsForm(name=user.name, email=user.email)
+
+    if form.validate_on_submit():
+
+        user.update(name=form.name.data)
+        user.update(email=form.email.data)
+
+        # given_filename = secure_filename(form.avatar.data.filename)
+        # if allowed_file(given_filename):
+        #     extension = filename.rsplit('.', 1)[1]
+        #     filename = str(hashlib.md5(user.email.encode('utf-8')).hexdigest()) + '.' + extension
+        #     form.avatar.data.save("static/images/users/" + filename)
+            
+        flash("settings saved")
+        return redirect(url_for('profile'))
+
+    return render_template("settings.html", form=form, user=get_user())
 
 @app.route('/adminify', methods=['GET', 'POST'])
 @require_login(2)
@@ -369,7 +404,12 @@ def audition_signup(show):
         all_auditions_in_block = []
         current_start = a.start_time
         while current_start <= a.end_time:
-            all_auditions_in_block.append(current_start.strftime("%H:%M"))
+            time_str = a.date.strftime("%B %d") + " " + current_start.strftime("%H:%M")
+
+            # If somebody else doesn't have the timeslot
+            if not AuditionTimes.query.filter_by(show=show).filter_by(time_str=time_str).first():
+                all_auditions_in_block.append(current_start.strftime("%H:%M"))
+
             current_start += a.audition_length
 
         formatted_auditions = zip([a.date.strftime("%A %B %d")] * len(all_auditions_in_block), all_auditions_in_block)
@@ -385,9 +425,17 @@ def audition_signup(show):
 
     if request.method == 'POST':
         if not form.validate():
+            if AuditionTimes.query.filter_by(show=show).filter_by(user_id=get_user().id).first():
+                flash("This will overwrite your previous audition time!")
             return render_template('audition-signup.html', form=form, show=show, days=days, user=get_user())
         else:
             user = get_user()
+            
+            # If the user is signed up for an audition time, delete it.
+            old_auditions = AuditionTimes.query.filter_by(show=show).filter_by(user_id=user.id)
+            if old_auditions.first():
+                flash("Deleted audition at {0}".format(old_auditions.first().time.strftime("%H:%M")))
+                old_auditions.delete()
 
             time_raw = form.available_times.data
             datetime_object = datetime.datetime.strptime(time_raw.replace("::", " "), "%A %B %d %H:%M")
@@ -399,4 +447,6 @@ def audition_signup(show):
             return redirect(url_for('profile'))
 
     elif request.method == 'GET':
+        if AuditionTimes.query.filter_by(show=show).filter_by(user_id=get_user().id).first():
+            flash("This will overwrite your previous audition time!")
         return render_template('audition-signup.html', form=form, show=show, days=days, user=get_user())

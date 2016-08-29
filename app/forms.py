@@ -8,7 +8,7 @@ of their information is handled in views.py
 from flask_wtf import Form
 
 from wtforms import (StringField, BooleanField, PasswordField, SubmitField, 
-RadioField, SelectMultipleField, widgets, SelectField, DateField)
+RadioField, SelectMultipleField, widgets, SelectField, DateField, FileField)
 
 from wtforms.validators import DataRequired, Email, EqualTo
 from .models import User 
@@ -188,6 +188,19 @@ class AuditionSignupForm(Form):
 
     available_times = RadioField("Available Times")
     submit = SubmitField("Submit")
+
+    def __init__(self, *args, **kwargs):
+        Form.__init__(self, *args, **kwargs)
+
+class SettingsForm(Form):
+    """
+    Allow the user to modify their settings
+    """
+
+    name = StringField('name', validators=[DataRequired("Please enter your name.")])
+    email = StringField('email', validators=[DataRequired("Please enter your email.")])
+    avatar = FileField('avatar')
+    submit = SubmitField("Save changes")
 
     def __init__(self, *args, **kwargs):
         Form.__init__(self, *args, **kwargs)

@@ -5,6 +5,8 @@ Handles the databases and their properties
 from app import db
 from datetime import datetime
 from werkzeug import generate_password_hash, check_password_hash
+import hashlib
+import os
 
 class QueryMixin(object):
     """
@@ -75,6 +77,14 @@ class User(db.Model, QueryMixin):
         """
         Return the user's avatar we store on site.
         """
+   
+        hash_ = str(hashlib.md5(self.email.encode('utf-8')).hexdigest())
+
+        for ext in ["png", "jpg", "jpeg", "gif"]:
+            filename = "static/images/users/{0}.{1}".format(hash_, ext)
+            if os.path.exists(filename):
+                return filename
+
         return "static/images/users/anon.jpg"
 
     def __repr__(self):
@@ -112,12 +122,14 @@ class AuditionTimes(db.Model, QueryMixin):
     """
     id = db.Column(db.Integer, primary_key=True)
     show = db.Column(db.String(64), index=True)
+    time_str = db.Column(db.String(64), index=True)
     time = db.Column(db.DateTime)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
     def __init__(self, show, time, user):
         self.show = show
         self.time = time
+        self.time_str = time.strftime("%B %d %H:%M")
         self.user_id = user.id
 
     def __repr__(self):
