@@ -10,7 +10,7 @@ We use the user's email as a token (stored as a cookie in flask `session`) to
 check if a proper user is logged in, and change the functionality appropriately.
 """
 from flask import render_template, flash, redirect, request, session, url_for
-from .forms import LoginForm, SignUpForm, ChooseAdminsForm, ChooseWebmasterForm, CreateAuditionTimesForm, AuditionSignupForm, ShowSelectForm, SettingsForm
+from .forms import LoginForm, SignUpForm, ChooseAdminsForm, ChooseWebmasterForm, CreateAuditionTimesForm, AuditionSignupForm, ShowSelectForm, SettingsForm, AnnouncementsForm
 from .models import User, PossibleAuditionTimes, AuditionTimes
 from werkzeug import secure_filename
 from app import app, db
@@ -450,3 +450,31 @@ def audition_signup(show):
         if AuditionTimes.query.filter_by(show=show).filter_by(user_id=get_user().id).first():
             flash("This will overwrite your previous audition time!")
         return render_template('audition-signup.html', form=form, show=show, days=days, user=get_user())
+
+@app.route('/make-announcement', methods=['GET', 'POST'])
+@require_login(2)
+def make_announcement():
+    """
+    Modify the announcements homepage tab
+    """
+    old_text = get_txt("announcements.txt")
+    form = AnnouncementsForm(announcements=old_text)
+
+
+    complete_path = os.path.join(os.getcwd(), "app", "static", "txts", "announcements.txt")
+
+    with open(complete_path, 'w+') as old_announcement_file:
+
+        if request.method == 'POST':
+            if not form.validate():
+                return render_template('make_announcement.html', form=form, user=get_user())
+            else:
+                
+                print form.announcements.data
+                old_announcement_file.write(form.announcements.data)
+
+                flash("announcement posted!")
+                return redirect(url_for('profile'))
+
+        elif request.method == 'GET':
+            return render_template('select-show.html', form=form, user=get_user())
