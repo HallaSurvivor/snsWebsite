@@ -71,6 +71,12 @@ class User(db.Model, QueryMixin):
         """
         return check_password_hash(self.password_hash, password)
 
+    def avatar(self):
+        """
+        Return the user's avatar we store on site.
+        """
+        return "static/images/users/anon.jpg"
+
     def __repr__(self):
         return '<User: {name} Level: {level}>'.format(name=self.name, level=self.user_level)
 

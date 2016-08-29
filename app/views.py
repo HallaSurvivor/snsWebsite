@@ -41,6 +41,15 @@ def get_txt(filename):
   
   return raw_text
 
+def get_user():
+    """
+    Return the user if there is one logged in, None otherwise
+    """
+    if 'email' not in session:
+        return None
+    else:
+        return User.query.filter_by(email=session['email']).first()
+
 def require_login(user_level=0):
     """
     A decorator to verify the user is logged in before going to a webpage
@@ -82,30 +91,30 @@ def require_login(user_level=0):
 @app.route('/')
 @app.route('/index')
 def index():
-  return render_template('index.html', announcements=get_txt("announcements.txt"))
+    return render_template('index.html', announcements=get_txt("announcements.txt"), user=get_user())
 
 @app.route('/about')
 def about():
-  return render_template('about.html', title="About Us")
+    return render_template('about.html', title="About Us", user=get_user())
 
 @app.route('/tickets')
 def tickets():
-  return render_template('tickets.html', title="Buy Tickets")
+    return render_template('tickets.html', title="Buy Tickets", user=get_user())
 
 @app.route('/subtroupes')
 def subtroupes():
-  # Dynamically update subtroupes.html with: tisbert.txt, npp.txt, workshopping.txt
-  return render_template('subtroupes.html', title="SNS Subtroupes", 
-      tisbert_text=get_txt("tisbert.txt"), npp_text=get_txt("npp.txt"), 
-      workshopping_text=get_txt("workshopping.txt"))
+    # Dynamically update subtroupes.html with: tisbert.txt, npp.txt, workshopping.txt
+    return render_template('subtroupes.html', title="SNS Subtroupes", 
+        tisbert_text=get_txt("tisbert.txt"), npp_text=get_txt("npp.txt"), 
+        workshopping_text=get_txt("workshopping.txt"), user=get_user())
 
 @app.route('/join')
 def join():
-  return render_template('join.html', title="Join Us!")
+    return render_template('join.html', title="Join Us!", user=get_user())
 
 @app.route('/alumni')
 def alumni():
-  return render_template('alumni.html', title="Alumni")
+    return render_template('alumni.html', title="Alumni", user=get_user())
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
@@ -113,7 +122,7 @@ def signup():
 
     if request.method == 'POST':
         if not form.validate():
-            return render_template('signup.html', title="Sign up!", form=form)
+            return render_template('signup.html', title="Sign up!", form=form, user=get_user())
         else:
             # Create the new user
             newUser = User.create(form.name.data, form.email.data, form.password.data)
@@ -125,7 +134,7 @@ def signup():
             return redirect(url_for('profile'))
 
     elif request.method == 'GET':
-        return render_template('signup.html', title="Sign up!", form=form)
+        return render_template('signup.html', title="Sign up!", form=form, user=get_user())
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -133,13 +142,13 @@ def login():
 
     if request.method == 'POST':
         if not form.validate():
-            return render_template('login.html', title="Log in!", form=form)
+            return render_template('login.html', title="Log in!", form=form, user=get_user())
         else:
             session['email'] = form.email.data
             return redirect(url_for('profile'))
 
     elif request.method == 'GET':
-        return render_template('login.html', title="Log in!", form=form)
+        return render_template('login.html', title="Log in!", form=form, user=get_user())
 
 @app.route('/logout')
 def logout():
@@ -157,8 +166,7 @@ def profile():
     The dynamic content based in user 
     is handled in profile.html
     """
-    user = User.query.filter_by(email=session['email']).first()
-    return render_template('profile.html', user=user)
+    return render_template('profile.html', user=get_user())
 
 @app.route('/adminify', methods=['GET', 'POST'])
 @require_login(2)
@@ -180,7 +188,7 @@ def adminify():
             admins = User.query.filter_by(user_level=1).all()
             form.admins.data = [user.email for user in admins]
 
-            return render_template('adminify.html', form=form)
+            return render_template('adminify.html', form=form, user=get_user())
 
         else:
             old_admin_emails = [user.email for user in users if user.user_level == 1]
@@ -210,7 +218,7 @@ def adminify():
         admins = User.query.filter_by(user_level=1).all()
         form.admins.data = [user.email for user in admins]
 
-        return render_template('adminify.html', form=form)
+        return render_template('adminify.html', form=form, user=get_user())
 
 @app.route('/webmasterify', methods=['GET', 'POST'])
 @require_login(2)
@@ -234,7 +242,7 @@ def webmasterify():
             # could leave us in a situation with no webmaster.
             form.masters.data = [user.email for user in masters if user.email != session['email']]
 
-            return render_template('webmasterify.html', form=form)
+            return render_template('webmasterify.html', form=form, user=get_user())
 
         else:
             old_master_emails = [user.email for user in users if user.user_level == 2 and user.email != session['email']]
@@ -260,7 +268,7 @@ def webmasterify():
         masters = User.query.filter_by(user_level=2).all()
         form.masters.data = [user.email for user in masters]
 
-        return render_template('webmasterify.html', form=form)
+        return render_template('webmasterify.html', form=form, user=get_user())
 
 @app.route('/make-audition-times', methods=['GET', 'POST'])
 @require_login(1)
@@ -270,7 +278,7 @@ def make_audition_times():
     if request.method == 'POST':
         if not form.validate():
             print form.data
-            return render_template('make-audition-times.html', form=form)
+            return render_template('make-audition-times.html', form=form, user=get_user())
         else:
 
             # WTForms doesn't like passing around datetime objects,
@@ -303,7 +311,7 @@ def make_audition_times():
             return redirect(url_for('profile'))
 
     elif request.method == 'GET':
-        return render_template('make-audition-times.html', form=form)
+        return render_template('make-audition-times.html', form=form, user=get_user())
 
 @app.route('/audition-signup', methods=['GET', 'POST'])
 @require_login()
@@ -333,12 +341,12 @@ def audition_signup_selector():
         
         if request.method == 'POST':
             if not form.validate():
-                return render_template('select-show.html', form=form)
+                return render_template('select-show.html', form=form, user=get_user())
             else:
                 return redirect(url_for('audition_signup', show=form.shows.data))
 
         elif request.method == 'GET':
-            return render_template('select-show.html', form=form)
+            return render_template('select-show.html', form=form, user=get_user())
 
 @app.route('/audition-signup/<string:show>', methods=['GET', 'POST'])
 @require_login()
@@ -377,9 +385,9 @@ def audition_signup(show):
 
     if request.method == 'POST':
         if not form.validate():
-            return render_template('audition-signup.html', form=form, show=show, days=days)
+            return render_template('audition-signup.html', form=form, show=show, days=days, user=get_user())
         else:
-            user = User.query.filter_by(email=session['email']).first()
+            user = get_user()
 
             time_raw = form.available_times.data
             datetime_object = datetime.datetime.strptime(time_raw.replace("::", " "), "%A %B %d %H:%M")
@@ -391,4 +399,4 @@ def audition_signup(show):
             return redirect(url_for('profile'))
 
     elif request.method == 'GET':
-        return render_template('audition-signup.html', form=form, show=show, days=days)
+        return render_template('audition-signup.html', form=form, show=show, days=days, user=get_user())
