@@ -11,7 +11,7 @@ from wtforms import (StringField, BooleanField, PasswordField, SubmitField,
 RadioField, SelectMultipleField, widgets, SelectField, DateField)
 
 from wtforms.validators import DataRequired, Email, EqualTo
-from .models import User
+from .models import User 
 import datetime
 
 class MultiCheckboxField(SelectMultipleField):
@@ -130,16 +130,37 @@ class CreateAuditionTimesForm(Form):
 
     date = DateField("Date", format='%Y-%m-%d')
 
+    # A list of every 30 minutes between 00:00 and 23:30 (inclusive)
     start_times = [datetime.time(h, 30*m) for h in xrange(24) for m in xrange(2)]
-    start_time = SelectField("Start Time", choices=[(x.strftime("%H:%M"), x.strftime("%H:%M")) for x in start_times])
+
+    # We format the times as HH:MM to pass around WTForms, 
+    # rather than passing datetime.time objects
+    start_time_strings = [x.strftime("%H:%M") for x in start_times]
+    start_time = SelectField("Start Time", choices=[(x,x) for x in start_time_strings])
 
     # The length of one audition
+    # These vary from 5 minutes to 30 minutes in 5 minute intervals
     lengths = [datetime.timedelta(minutes=5*(x+1)) for x in xrange(6)]
-    audition_length = SelectField("Individual audition length", choices=[(str(x.total_seconds()), str(x)[2:4] + " minutes") for x in lengths])
+
+    # We format the lengths as strings too. In the back end, we pass around
+    # a string representing the number of seconds the audition lasts,
+    # because it's easy to turn this back into a timedelta.
+    # As for what the user sees, we take the middle digits 
+    # (since it's formatted as HH:MM:SS) and strip away just the minutes 
+    # we care about before appending " minutes" so the user knows what's happening
+    audition_length_choices = [(str(x.total_seconds()), str(x)[2:4] + " minutes") for x in lengths]
+
+    audition_length = SelectField("Individual audition length", choices=audition_length_choices)
 
     # The length of the total allotted time for auditions
+    # These vary from 1 hour to 8 hours
     durations = [datetime.timedelta(hours=x+1) for x in xrange(8)]
-    duration = SelectField("Length of audition block", choices=[(str(x.total_seconds()), str(x)[0] + " hours") for x in durations])
+
+    # We do the same process as with the audition lengths,
+    # but we strip away the hours instead of the minutes
+    duration_choices = [(str(x.total_seconds()), str(x)[0] + " hours") for x in durations]
+
+    duration = SelectField("Length of audition block", choices=duration_choices)
 
     submit = SubmitField("Make audition")
 

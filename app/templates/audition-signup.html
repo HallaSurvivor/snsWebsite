@@ -4,7 +4,7 @@
   <br><br><br<br><br><br><br><br><br><br><br><br><br><br><br>
   <h1>Auditions for {{ show }}</h1>
   <form action="" method=post>
-    <table>
+    <table align="center" cellspacing="10">
       <tr>
         {% for day in days %}
         <th>{{ day }}</th>
@@ -13,7 +13,7 @@
       <tr>
         {% for day in days %}
         <td>
-          <table>
+          <table border="1" align="center">
             {% for subfield in form.available_times %}
             {% if day in subfield.label.text %}
               <tr>
@@ -33,6 +33,7 @@
     {% endfor %}
     </ul>
     {% endif %}
+    {{ form.submit }}
     {{ form.hidden_tag() }}
   </form>
 {% endblock %}

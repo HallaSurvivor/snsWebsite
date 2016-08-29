@@ -100,7 +100,7 @@ class PossibleAuditionTimes(db.Model, QueryMixin):
 
         self.audition_length = audition_length
 
-class AuditionTimes(db.Model):
+class AuditionTimes(db.Model, QueryMixin):
     """
     A table of who is auditioning for what when
     """
@@ -109,5 +109,11 @@ class AuditionTimes(db.Model):
     time = db.Column(db.DateTime)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
+    def __init__(self, show, time, user):
+        self.show = show
+        self.time = time
+        self.user_id = user.id
+
     def __repr__(self):
-        return '<Audition for {show} at {time} :: {person}>'.format(show=self.show, time=self.time, person=self.auditioner)
+        person = User.query.filter_by(id=self.user_id).first()
+        return '<Audition for {show} at {time} :: {person}>'.format(show=self.show, time=self.time, person=person)

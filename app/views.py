@@ -11,7 +11,7 @@ check if a proper user is logged in, and change the functionality appropriately.
 """
 from flask import render_template, flash, redirect, request, session, url_for
 from .forms import LoginForm, SignUpForm, ChooseAdminsForm, ChooseWebmasterForm, CreateAuditionTimesForm, AuditionSignupForm, ShowSelectForm
-from .models import User, PossibleAuditionTimes
+from .models import User, PossibleAuditionTimes, AuditionTimes
 from app import app, db
 from functools import wraps
 import datetime
@@ -277,10 +277,24 @@ def make_audition_times():
             # now we need to decode them.
             title = form.title.data
             date  = form.date.data
-            start = datetime.datetime.combine(datetime.date.today(), datetime.time(hour=int(form.start_time.data[:2]), minute=int(form.start_time.data[-2:])))
-            end   = start + datetime.timedelta(seconds=int(float(form.duration.data)))
 
-            audition_length = datetime.timedelta(seconds=int(float(form.audition_length.data)))  # length of one person's audition
+            start_raw = form.start_time.data
+            start_hour = int(start_raw[:2])  # Take the HH part of the HH:MM
+            start_minute = int(start_raw[-2:]) # Take the MM part of the HH:MM
+
+            start_time = datetime.time(hour=start_hour, minute=start_minute)
+
+            # We need to convert the time into a dateTime, so we 
+            # arbitrarily merge it with today's date
+            start = datetime.datetime.combine(datetime.date.today(), start_time)
+            end = start + datetime.timedelta(seconds=int(float(form.duration.data)))
+
+            # We stored the audition length as a string representing
+            # the number of seconds the audition time lasts.
+            # Why do we need to go string -> float -> int 
+            # rather than str -> int? I have no idea.
+            audition_length_in_seconds = int(float(form.audition_length.data))
+            audition_length = datetime.timedelta(seconds=audition_length_in_seconds)
 
             PossibleAuditionTimes.create(title, date, start, end, audition_length)
 
@@ -360,15 +374,20 @@ def audition_signup(show):
 
     form.available_times.choices = [(c,c) for c in labels]
 
-    for subfield in form.available_times:
-        print subfield
-
     if request.method == 'POST':
         if not form.validate():
             return render_template('audition-signup.html', form=form, show=show, days=days)
         else:
-            # get data from form, sign up the logged in user at that time
-            pass
+            user = User.query.filter_by(email=session['email']).first()
+
+            time_raw = form.available_times.data
+            datetime_object = datetime.datetime.strptime(time_raw.replace("::", " "), "%A %B %d %H:%M")
+
+            AuditionTimes.create(show, datetime_object, user)
+
+            time_string = time_raw.replace("::", " @ ")
+            flash("Successfully registered for {0} audition at {1}".format(show, time_string))
+            return redirect(url_for('profile'))
 
     elif request.method == 'GET':
         return render_template('audition-signup.html', form=form, show=show, days=days)
