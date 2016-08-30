@@ -173,7 +173,7 @@ class ShowSelectForm(Form):
 
     Dynamically updated in views.py
     """
-    shows = SelectField("Shows you can audition for")
+    shows = SelectField("Available Shows")
     submit = SubmitField("Select")
 
     def __init__(self, *args, **kwargs):

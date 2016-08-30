@@ -319,7 +319,6 @@ def make_audition_times():
 
     if request.method == 'POST':
         if not form.validate():
-            print form.data
             return render_template('make-audition-times.html', form=form, user=get_user())
         else:
 
@@ -327,17 +326,13 @@ def make_audition_times():
             # so we first encode them as strings in various ways,
             # now we need to decode them.
             title = form.title.data
-            date  = form.date.data
+
+            date = form.date.data
 
             start_raw = form.start_time.data
-            start_hour = int(start_raw[:2])  # Take the HH part of the HH:MM
-            start_minute = int(start_raw[-2:]) # Take the MM part of the HH:MM
+            start_time = datetime.datetime.strptime(start_raw, "%H:%M").time()
 
-            start_time = datetime.time(hour=start_hour, minute=start_minute)
-
-            # We need to convert the time into a dateTime, so we 
-            # arbitrarily merge it with today's date
-            start = datetime.datetime.combine(datetime.date.today(), start_time)
+            start = datetime.datetime.combine(date, start_time)
             end = start + datetime.timedelta(seconds=int(float(form.duration.data)))
 
             # We stored the audition length as a string representing
@@ -401,7 +396,7 @@ def audition_signup(show):
     upcoming_audition_blocks = [a for a in all_audition_blocks if a.date > today]
     relevant_audition_blocks = [a for a in upcoming_audition_blocks if a.show == show]
 
-    days = [a.date.strftime("%A %B %d") for a in relevant_audition_blocks]
+    days = [a.date.strftime("%A %B %d %Y") for a in relevant_audition_blocks]
 
     # We expand the relevant audition blocks into a list of every possible audition
     # the user can sign up for (for a given show)
@@ -419,7 +414,7 @@ def audition_signup(show):
 
             current_start += a.audition_length
 
-        formatted_auditions = zip([a.date.strftime("%A %B %d")] * len(all_auditions_in_block), all_auditions_in_block)
+        formatted_auditions = zip([a.date.strftime("%A %B %d %Y")] * len(all_auditions_in_block), all_auditions_in_block)
         relevant_auditions += formatted_auditions
 
 
@@ -445,7 +440,7 @@ def audition_signup(show):
                 old_auditions.delete()
 
             time_raw = form.available_times.data
-            datetime_object = datetime.datetime.strptime(time_raw.replace("::", " "), "%A %B %d %H:%M")
+            datetime_object = datetime.datetime.strptime(time_raw.replace("::", " "), "%A %B %d %Y %H:%M")
 
             AuditionTimes.create(show, datetime_object, user)
 
@@ -483,3 +478,59 @@ def make_announcement():
 
         elif request.method == 'GET':
             return render_template('select-show.html', form=form, user=get_user())
+
+@app.route('/audition-calendar', methods=['GET', 'POST'])
+@require_login(1)
+def audition_calendar_selector():
+    """
+    Have the user potentially choose between a list of avaiable shows to watch the auditions for
+    """
+    today = datetime.datetime.today()
+
+    all_auditions = PossibleAuditionTimes.query.all()
+    upcoming_auditions = [a for a in all_auditions if a.date > today]
+   
+    shows = set()
+    for a in upcoming_auditions:
+        shows.add(a.show)
+
+    if len(shows) == 0:
+        flash("No upcoming auditions")
+        return redirect(url_for('profile'))
+
+    if len(shows) == 1:
+        return redirect(url_for('audition_calendar', show=shows.pop()))
+
+    if len(shows) > 1:
+        form = ShowSelectForm()
+        form.shows.choices = [(s,s) for s in shows]
+        
+        if request.method == 'POST':
+            if not form.validate():
+                return render_template('select-show.html', form=form, user=get_user())
+            else:
+                return redirect(url_for('audition_calendar', show=form.shows.data))
+
+        elif request.method == 'GET':
+            return render_template('select-show.html', form=form, user=get_user())
+
+@app.route('/audition-calendar/<string:show>')
+@require_login(1)
+def audition_calendar(show):
+    """
+    Show a list of who is auditioning when for a given show
+    """
+    auditions = AuditionTimes.query.filter_by(show=show).all()
+    relevant_auditions = [a for a in auditions if a.time > datetime.datetime.today()]
+
+    users = []
+    times = []
+    for a in relevant_auditions:
+        user = User.query.filter_by(id=a.user_id).first()
+        users.append(user)
+
+        times.append(a.time_str)
+
+    to_display = zip(users, times)
+
+    return render_template('audition-calendar.html', show=show, user=get_user(), auditions=to_display)

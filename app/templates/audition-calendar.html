@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <br><br><br<br><br><br><br><br><br><br><br><br><br><br><br>
+  <h1>Auditions for {{ show }}</h1>
+
+  <table>
+    {% for audition in auditions %}
+      <tr>
+        <td>{{ audition[1] }}</td>
+        <td>{{ audition[0].name }}</td>
+      </tr>
+    {% endfor %}
+  </table>
+
+{% endblock %}
