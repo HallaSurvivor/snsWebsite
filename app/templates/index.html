@@ -6,7 +6,7 @@
     <div class="tab">announcements
       <div class="content">
         {% if announcements %}
-          {{ announcements }}
+          {{ announcements|safe }}
         {% else %}
           No announcements for now!
         {% endif %}

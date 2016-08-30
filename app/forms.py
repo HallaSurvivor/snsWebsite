@@ -8,7 +8,7 @@ of their information is handled in views.py
 from flask_wtf import Form
 
 from wtforms import (StringField, BooleanField, PasswordField, SubmitField, 
-RadioField, SelectMultipleField, widgets, SelectField, DateField, FileField, TextField)
+RadioField, SelectMultipleField, widgets, SelectField, DateField, FileField, TextAreaField)
 
 from wtforms.validators import DataRequired, Email, EqualTo
 from .models import User 
@@ -199,7 +199,6 @@ class SettingsForm(Form):
 
     name = StringField('name', validators=[DataRequired("Please enter your name.")])
     email = StringField('email', validators=[DataRequired("Please enter your email.")])
-    avatar = FileField('avatar')
     submit = SubmitField("Save changes")
 
     def __init__(self, *args, **kwargs):
@@ -210,7 +209,7 @@ class AnnouncementsForm(Form):
     Modify the announcements pane on the homepage
     """
 
-    announcements = TextField('announcements')
+    announcements = TextAreaField('announcements')
     submit = SubmitField("Post announcments")
 
     def __init__(self, *args, **kwargs):

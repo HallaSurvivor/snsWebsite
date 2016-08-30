@@ -12,11 +12,11 @@ check if a proper user is logged in, and change the functionality appropriately.
 from flask import render_template, flash, redirect, request, session, url_for
 from .forms import LoginForm, SignUpForm, ChooseAdminsForm, ChooseWebmasterForm, CreateAuditionTimesForm, AuditionSignupForm, ShowSelectForm, SettingsForm, AnnouncementsForm
 from .models import User, PossibleAuditionTimes, AuditionTimes
+from bs4 import BeautifulSoup
 from werkzeug import secure_filename
 from app import app, db
 from functools import wraps
 import datetime
-import hashlib
 import os
 
 #### Helper functions ####
@@ -42,6 +42,20 @@ def get_txt(filename):
     raw_text = complete_path
   
   return raw_text
+
+def sanitize_announcements(html):
+    """
+    Take some html input and keep only safe tags
+    """
+    VALID_TAGS = ['p', 'ul', 'li', 'br', 'a', 'b', 'i', 'ol', 'u', 'div']
+
+    soup = BeautifulSoup(html)
+
+    for tag in soup.findAll(True):
+        if tag.name not in VALID_TAGS:
+            tag.hidden = True
+
+    return soup.renderContents()
 
 def allowed_file(filename):
     """
@@ -184,7 +198,6 @@ def settings():
     """
     user = get_user()
 
-    # allowed_extensions = set(["png", "jpg", "jpeg", "gif"])
     form = SettingsForm(name=user.name, email=user.email)
 
     if form.validate_on_submit():
@@ -192,12 +205,6 @@ def settings():
         user.update(name=form.name.data)
         user.update(email=form.email.data)
 
-        # given_filename = secure_filename(form.avatar.data.filename)
-        # if allowed_file(given_filename):
-        #     extension = filename.rsplit('.', 1)[1]
-        #     filename = str(hashlib.md5(user.email.encode('utf-8')).hexdigest()) + '.' + extension
-        #     form.avatar.data.save("static/images/users/" + filename)
-            
         flash("settings saved")
         return redirect(url_for('profile'))
 
@@ -291,7 +298,7 @@ def webmasterify():
                 except ValueError:
                     pass
 
-            # Un-webmaster-ify people who were admins but aren't now
+            # Un-webmaster-ify people who were webmasters but aren't now
             for old_master_email in old_master_emails:
                 user = User.query.filter_by(email=old_master_email).first()
                 user.update(user_level=0)
@@ -368,7 +375,7 @@ def audition_signup_selector():
         return redirect(url_for('profile'))
 
     if len(shows) == 1:
-        return redirect(url_for('audition_signup', show=shows[0]))
+        return redirect(url_for('audition_signup', show=shows.pop()))
 
     if len(shows) > 1:
         form = ShowSelectForm()
@@ -460,7 +467,6 @@ def make_announcement():
     old_text = get_txt("announcements.txt")
     form = AnnouncementsForm(announcements=old_text)
 
-
     complete_path = os.path.join(os.getcwd(), "app", "static", "txts", "announcements.txt")
 
     with open(complete_path, 'w+') as old_announcement_file:
@@ -470,8 +476,7 @@ def make_announcement():
                 return render_template('make_announcement.html', form=form, user=get_user())
             else:
                 
-                print form.announcements.data
-                old_announcement_file.write(form.announcements.data)
+                old_announcement_file.write(sanitize_announcements(form.announcements.data))
 
                 flash("announcement posted!")
                 return redirect(url_for('profile'))

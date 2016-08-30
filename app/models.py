@@ -5,7 +5,6 @@ Handles the databases and their properties
 from app import db
 from datetime import datetime
 from werkzeug import generate_password_hash, check_password_hash
-import hashlib
 import os
 
 class QueryMixin(object):
@@ -72,20 +71,6 @@ class User(db.Model, QueryMixin):
         Compare the offered password with our salted/hashed one
         """
         return check_password_hash(self.password_hash, password)
-
-    def avatar(self):
-        """
-        Return the user's avatar we store on site.
-        """
-   
-        hash_ = str(hashlib.md5(self.email.encode('utf-8')).hexdigest())
-
-        for ext in ["png", "jpg", "jpeg", "gif"]:
-            filename = "static/images/users/{0}.{1}".format(hash_, ext)
-            if os.path.exists(filename):
-                return filename
-
-        return "static/images/users/anon.jpg"
 
     def __repr__(self):
         return '<User: {name} Level: {level}>'.format(name=self.name, level=self.user_level)
