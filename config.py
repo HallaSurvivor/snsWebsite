@@ -19,3 +19,12 @@ SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'app.db')
 
 # We don't need sqlalchemy to track our changes for us
 SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+# Email support!!!
+MAIL_SERVER = 'smtp.googlemail.com'
+MAIL_PORT = 465
+MAIL_USE_TLS = False
+MAIL_USE_SSL = True
+MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
+MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
+MAIL_ADDRESS = os.environ.get('MAIL_ADDRESS')

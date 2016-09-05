@@ -25,14 +25,15 @@
   </div>
 
 <!--Slick Carousel | Made by kenwheeler at Github  and modified by me-->
-
-  <div class="slideshow" align="center">
-    <div><img src="{{ url_for('static', filename='images/homepage1.jpg') }}"></div>
-    <div><img src="{{ url_for('static', filename='images/homepage2.jpg') }}"></div>
-    <div><img src="{{ url_for('static', filename='images/homepage3.jpg') }}"></div>
-    <div><img src="{{ url_for('static', filename='images/homepage4.jpg') }}"></div>
-    <div><img src="{{ url_for('static', filename='images/homepage5.jpg') }}"></div>
-  </div>
+  {% if photos %}
+    <div class="slideshow" align="center">
+      {% for photo in photos %}
+      <div><img src="{{ url_for('static', filename='images/homepage/{0}'.format(photo)) }}"></div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div align="center">DEFAULT PHOTO</div>
+  {% endif %}
 
   <script type="text/javascript" src="{{ url_for('static', filename='slick/slick.min.js') }}"></script>
   <script type="text/javascript" src="{{ url_for('static', filename='js/slideshow.js') }}"></script>

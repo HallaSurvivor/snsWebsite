@@ -21,6 +21,22 @@ import os
 
 #### Helper functions ####
 
+def get_slideshow_images():
+    """
+    Return a list of the photos to be used in the slideshow in /index
+
+    The photos are stored in app/static/images/hompeage/
+
+    The photos get sorted alphabetically, so if you want to reorder
+    the slideshow, all you need to do is appropriately rename the
+    photo in the folder.
+    """
+    path = os.path.join(os.getcwd(), "app", "static", "images", "homepage")
+    files = os.listdir(path)
+
+    # Filter out just the files.
+    return [f for f in files if os.path.isfile(os.path.join(path, f))]
+
 def get_txt(filename):
   """
   Return the text stored in app/static/txts/filename.txt if it exists. 
@@ -113,7 +129,7 @@ def require_login(user_level=0):
 @app.route('/')
 @app.route('/index')
 def index():
-    return render_template('index.html', announcements=get_txt("announcements.txt"), user=get_user())
+    return render_template('index.html', announcements=get_txt("announcements.txt"), user=get_user(), photos=get_slideshow_images())
 
 @app.route('/about')
 def about():
